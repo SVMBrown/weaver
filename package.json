@@ -1,0 +1,15 @@
+{
+  "name": "weaver-cljs",
+  "version": "0.0.1",
+  "description": "EDN Config processor and transformer",
+  "license": "MIT",
+  "dependencies": {
+    "lumo-cljs": "^1.8.0"
+  },
+  "files": [
+    "src/"
+  ],
+  "directories": {
+    "lib": "src"
+  }
+}
