@@ -1,12 +1,11 @@
 (defproject weaver "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "Configuration templating DSL"
+  :url "https://github.com/SVMBrown/weaver"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/clojurescript "1.10.339"]
-                 [reagent "0.8.1"]]
+                 [org.clojure/clojurescript "1.10.339"]]
 
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-figwheel "0.5.16"]]
@@ -18,6 +17,8 @@
    [:cljsbuild :builds :app :compiler :output-to]]
 
   :resource-paths ["public"]
+
+  :source-paths ["src"]
 
   :figwheel {:http-server-root "."
              :nrepl-port 7002

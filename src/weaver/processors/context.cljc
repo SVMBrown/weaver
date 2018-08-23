@@ -19,7 +19,7 @@
 (defmethod process-node :ctx/get-in-resource [ctx {:keys [resource-id path default]}]
   (if-some [resource (get ctx resource-id)]
     (get-in resource path default)
-    (x/log-and-exit (str "Resource: " resource-id " not found in context! Please provide " resource-id " and try again."))))
+    (x/warn-and-exit (str "Resource: " resource-id " not found in context! Please provide " resource-id " and try again."))))
 
 (defmethod context-required-for-processor :ctx/get-in-resource! [{:keys [resource-id]}]
   #{resource-id})
@@ -27,7 +27,7 @@
 (defmethod process-node :ctx/get-in-resource! [ctx {:keys [resource-id path] :as node}]
   (if-some [result (process-node ctx (assoc node :weaver.processor/id :ctx/get-in-resource))]
     result
-    (x/log-and-exit
+    (x/warn-and-exit
      (str "Error in node: " node)
      (str "Value not found in provided resource: " resource-id " at path: " path "."))))
 
@@ -46,5 +46,5 @@
   (if-some [function (get ctx function-id)]
     (if (ifn? function)
       (apply function args)
-      (x/log-and-exit (str  function-id " in context cannot be used as a function. Please provide a function and try again.")))
-    (x/log-and-exit (str "Function: " function-id " not found in context! Please provide " function-id " and try again."))))
+      (x/warn-and-exit (str  function-id " in context cannot be used as a function. Please provide a function and try again.")))
+    (x/warn-and-exit (str "Function: " function-id " not found in context! Please provide " function-id " and try again."))))

@@ -11,7 +11,7 @@
     :else
     node))
 
-(defmulti pre-process-node #'pre-process-dispatch)
+(defmulti pre-process-node #'pre-process-node-dispatch)
 
 (defmethod pre-process-node :default [node]
   node)
