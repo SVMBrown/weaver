@@ -30,6 +30,9 @@
 
 (defmulti process-node #'process-node-dispatch)
 
+;;TODO: Ensure that we log or error if a weaver id is unrecognized
+;;TODO: Change dispatch to use explicit fallback, and change default to warn and exit
+
 (defmethod process-node :default [_ node]
   node)
 
