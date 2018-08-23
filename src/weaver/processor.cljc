@@ -10,7 +10,7 @@
     (multi/process-node ctx node)
     (catch #?(:clj Exception
               :cljs :default) e
-      (x/log-and-exit e
+      (x/warn-and-exit e
                       (str "Unhandled error while processing node: " node))
       (throw e))))
 
