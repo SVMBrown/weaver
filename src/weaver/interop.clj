@@ -1,7 +1,7 @@
 (ns weaver.interop
   (:require
    [clojure.tools.logging :as log]
-   [clojure.java.shell :refer [sh]]
+   [clojure.java.shell :as sh]
    [clojure.java.io :as io]
    [clojure.data.json :as json]))
 
