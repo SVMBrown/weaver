@@ -4,5 +4,6 @@
    [weaver.processors.env]
    [weaver.processors.config]
    [weaver.processors.git]
+   [weaver.processors.context]
    [weaver.processors.fn]))
 

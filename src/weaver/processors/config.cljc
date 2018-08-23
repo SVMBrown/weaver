@@ -1,31 +1,50 @@
 (ns weaver.processors.config
   (:require
    [weaver.interop :as x]
-   [weaver.processors.multi :refer [process-node]]))
+   [weaver.processors.multi :refer [pre-process-node process-node context-required-for-processor]]))
 
-(defmethod process-node [:keyword "config"] [{:keys [config]} node]
-  (if-some [result (get config (keyword (name node)))]
-    result
-    (x/warn-and-exit (str
-                      "Key: " (keyword (name node))
-                      " not found in config."
-                      " if this should be nilable, please use [:config/get " (keyword (name node)) "] "
-                      "or [:config/get " (keyword (name node)) " <default-value>]"))))
+(defmethod pre-process-node [:keyword "config"] [node]
+  {:weaver.processor/id :config/get-in!
+   :path [(keyword (name node))]})
 
 
-(defmethod process-node [:vector "config"] [{:keys [config]} [action lookup default :as node]]
+(defmethod pre-process-node [:vector "config"] [[action lookup default :as node]]
   (case (name action)
-    "get" (get config lookup default)
-    "get!" (if-some [val (get config lookup)]
-             lookup
-             (x/warn-and-exit
-              (str "Error from node: " node)
-              (str "Key " lookup " not found in config.")))
-    "get-in" (get-in config lookup default)
-    "get-in!" (if-some [val (get-in config lookup)]
-                lookup
-                (x/warn-and-exit
-                 (str "Error from node: " node)
-                 (str "Key " lookup " not found in config.")))
+    "get" {:weaver.processor/id :config/get-in
+           :path [lookup]
+           :default default}
+
+    "get-in" {:weaver.processor/id :config/get-in
+              :path lookup
+              :default default}
+
+    "get!" {:weaver.processor/id :config/get-in!
+            :path [lookup]}
+
+    "get-in!" {:weaver.processor/id :config/get-in
+               :path lookup}
+
     (x/warn-and-exit
      (str "Unrecognized environment node type: " node))))
+
+(defmethod context-required-for-processor :config/get-in [_]
+  #{:config})
+
+(defmethod process-node :config/get-in [{:keys [config]} {path :path
+                                                          default :default}]
+  (get-in config path default))
+
+(defmethod context-required-for-processor :config/get-in! [_]
+  #{:config})
+
+(defmethod process-node :config/get-in! [{:keys [config]} {path :path
+                                                           original :weaver.processor/original
+                                                           :as node}]
+  (if-some [result (get-in config path)]
+    result
+    (x/warn-and-exit
+     (str "Error from node: " (or original node))
+     (str "Value not found in config at path: " path ".")
+     (str
+      " if this should be nilable, please use [:config/get-in " path "] "
+      "or [:config/get-in " path " <default-value>]"))))

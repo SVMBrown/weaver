@@ -1,14 +1,23 @@
 (ns weaver.processors.fn
   (:require
    [weaver.interop :as x]
-   [weaver.processors.multi :refer [process-node]]))
+   [weaver.processors.multi :refer [pre-process-node process-node]]))
 
-(def processor-fns #:fn{:str str})
+(def default-lookup #:fn{:str str})
 
-(defmethod process-node [:vector "fn"] [{:keys [function-lookup]} [fn-kw & args :as node]]
-  (if-let [processor (get (merge processor-fns function-lookup) fn-kw)]
-    (apply processor args)
+(defmethod pre-process-node [:vector "fn"] [[fn-kw & args :as node]]
+  {:weaver.processor/id :fn/call
+   ::id fn-kw
+   :args args})
+
+(defmethod process-node :fn/call [{:keys [function-lookup]}
+                                  {fn-kw ::id
+                                   args :args
+                                   original :weaver.processor/original
+                                   :as node}]
+  (if-let [function (get (merge default-lookup function-lookup) fn-kw)]
+    (apply function args)
     (x/warn-and-exit (str
-                      "Key: " fn-kw
-                      " in node: " node
+                      "Function id: " fn-kw
+                      " in node: " (or original node)
                       " is not allowed. If this should be allowed, please provide a function-lookup map in the processing context."))))

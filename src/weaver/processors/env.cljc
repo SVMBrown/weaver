@@ -1,22 +1,32 @@
 (ns weaver.processors.env
   (:require
    [weaver.interop :as x]
-   [weaver.processors.multi :refer [process-node]]))
+   [weaver.processors.multi :refer [pre-process-node process-node]]))
 
-(defmethod process-node [:keyword "env"] [_ node]
-  (if-some [val (x/get-env (name node))]
-    val
-    (x/warn-and-exit
-     (str "Variable " (name node) " not found in environment.")
-     (str "If this variable is optional, please use: [:env/get " (name node) "] or [:env/get " (name node) " <default-value>] instead of " node "."))))
+(defmethod pre-process-node [:keyword "env"] [node]
+  {:weaver.processor/id :env/get!
+   :lookup (name node)})
 
-(defmethod process-node [:vector "env"] [_ [action lookup default :as node]]
+(defmethod pre-process-node [:vector "env"] [[action lookup default :as node]]
   (case (name action)
-    "get" (x/get-env lookup default)
-    "get!" (if-some [val (x/get-env lookup)]
-             lookup
-             (x/warn-and-exit
-              (str "Error from node: " node)
-              (str "Variable " lookup " not found in environment.")))
+    "get" {:weaver.processor/id :env/get
+           :lookup lookup
+           :default (or default nil)}
+    "get!" {:weaver.processor/id :env/get!
+            :lookup lookup}
     (x/warn-and-exit
      (str "Unrecognized environment node type: " node))))
+
+(defmethod process-node :env/get [_ {lookup :name
+                                     default :default
+                                     :or {default nil}}]
+  (x/get-env (name lookup) default))
+
+(defmethod process-node :env/get! [_ {lookup :name
+                                      original :weaver.processor/original
+                                      :as node}]
+  (if-some [val (x/get-env (name lookup))]
+    lookup
+    (x/warn-and-exit
+     (str "Error from node: " (or original node))
+     (str "Variable " lookup " not found in environment."))))

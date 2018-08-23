@@ -1,19 +1,29 @@
 (ns weaver.processors.multi)
 
-;;NOTE: This ad-hoc dispatch injecting args via keyword name is probably ill advised as a general pattern, and should be refactored coerce to a vectorized version before calling to provide a nice shorthand without making dispatch dependent on type.
-
-;;NOTE: Should prefix all abstract namespaces with :weaver... so that it can be used safely with arbitrary edn configs.
-
-(defn process-node-dispatch [_ node]
+(defn pre-process-node-dispatch [node]
   (cond
     (and (keyword? node) (namespace node))
     [:keyword (namespace node)]
 
-    (and (vector? node) (keyword? (first node)) (namespace (first node)))
+    (and (vector? node) (keyword (first node)) (namespace (first node)))
     [:vector (namespace (first node))]
 
-    (and (map? node) (:preprocessor/id node))
-    (:preprocessor/id node)
+    :else
+    node))
+
+(defmulti pre-process-node #'pre-process-dispatch)
+
+(defmethod pre-process-node :default [node]
+  node)
+
+(defn process-node-dispatch [_ node]
+  (cond
+    (or (and (keyword? node) (namespace node))
+        (and (vector? node) (keyword? (first node)) (namespace (first node))))
+    :pre-process
+
+    (and (map? node) (:weaver.processor/id node))
+    (:weaver.processor/id node)
 
     :else
     node))
@@ -22,3 +32,12 @@
 
 (defmethod process-node :default [_ node]
   node)
+
+(defmethod process-node :pre-process [ctx node]
+  (process-node ctx
+                (assoc (pre-process-node node) :weaver.processor/original node)))
+
+(defmulti context-required-for-processor :weaver.processor/id)
+
+(defmethod context-required-for-processor :default [node]
+  #{})
