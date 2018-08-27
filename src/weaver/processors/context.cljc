@@ -4,7 +4,7 @@
    [weaver.processors.multi :refer [pre-process-node process-node context-required-for-processor]]))
 
 (defmethod pre-process-node [:vector "ctx.get-in"] [[kw path default :as v]]
-  (if (= 3 (count v))
+  (if (= 3 (count v)) ;; Cannot simply check for nil as default, since we may have explicit nil
     {:weaver.processor/id :ctx/get-in-resource
      :resource-id (keyword (name kw))
      :path path

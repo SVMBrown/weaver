@@ -5,10 +5,14 @@
    [clojure.java.io :as io]
    [clojure.data.json :as json]))
 
-(defn warn-and-exit [& msgs]
+(defn warn-and-exit [error? & msgs]
+  (log/error error?)
   (doseq [msg msgs]
     (log/error msg))
-  (System/exit 1))
+  (if (instance? java.lang.Throwable error?)
+    (throw error?)
+    (throw (ex-info "Encountered weaver error!"
+                    {:causes (into [error?] msgs)}))))
 
 (defn get-env
   ([key]

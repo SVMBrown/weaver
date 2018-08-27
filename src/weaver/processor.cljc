@@ -11,8 +11,7 @@
     (catch #?(:clj Exception
               :cljs :default) e
       (x/warn-and-exit e
-                      (str "Unhandled error while processing node: " node))
-      (throw e))))
+                      (str "Unhandled error while processing node: " node)))))
 
 (defn pre-process
   [template]
@@ -27,6 +26,7 @@
     (reduce
      (fn [acc [k v]]
        (into acc (required-context-preprocessed v)))
+     ;; Check if current node has required context, and conjoin it with required context for its children
      (if (contains? template :weaver.processor/id)
        (context-required-for-processor template)
        #{})

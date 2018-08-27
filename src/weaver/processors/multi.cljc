@@ -1,4 +1,5 @@
-(ns weaver.processors.multi)
+(ns weaver.processors.multi
+  (:require [weaver.interop :as x]))
 
 (defn pre-process-node-dispatch [node]
   (cond
@@ -34,11 +35,25 @@
 ;;TODO: Change dispatch to use explicit fallback, and change default to warn and exit
 
 (defmethod process-node :default [_ node]
-  node)
+  (if-not (map? node)
+    node
+    (let [{processor :weaver.processor/id :or {processor ::no-op}} node]
+      (if (= processor ::no-op)
+        node
+        (throw (ex-info (str "No processor found with id " processor)
+                        {:node node}))))))
 
 (defmethod process-node :pre-process [ctx node]
-  (process-node ctx
-                (assoc (pre-process-node node) :weaver.processor/original node)))
+  (let [pre-processed (pre-process-node node)]
+    (cond
+      (map? pre-processed)
+      (process-node ctx
+                    (assoc pre-processed :weaver.processor/original node))
+
+      (= node pre-processed)
+      node
+
+      :else (process-node pre-processed))))
 
 (defmulti context-required-for-processor :weaver.processor/id)
 
