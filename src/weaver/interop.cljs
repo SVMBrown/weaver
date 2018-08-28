@@ -3,6 +3,11 @@
    [clojure.string :as string]
    ["fs" :as fs]))
 
+(def error-log js/console.error)
+(def warn-log js/console.warn)
+(def info-log js/console.info)
+(def debug-log js/console.debug)
+
 (defn- convert-and-error-log [arg]
   (js/console.error
    (if (or (string? arg) (= (type arg) js/Error))
