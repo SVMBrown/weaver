@@ -62,8 +62,6 @@
      :clauses (partition 2 args)}))
 
 (defmethod process-node :weaver/cond [_ {:keys [clauses]}]
-  (println "\n\n\n PROCESSING COND!!! \n\n")
-  (mapv #(do (println "\n\n CLAUSE \n\n")(clojure.pprint/pprint %)) clauses)
   (let [result (first (drop-while (fn [[pred _]] (not pred)) clauses))]
     (when result
       (second result))))
