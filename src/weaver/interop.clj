@@ -5,10 +5,10 @@
    [clojure.java.io :as io]
    [clojure.data.json :as json]))
 
-(def error-log log/error)
-(def warn-log log/warn)
-(def info-log log/info)
-(def debug-log log/debug)
+(defn error-log [& args] (doseq [arg args] (log/error arg)))
+(defn warn-log [& args] (doseq [arg args] (log/warn arg)))
+(defn info-log [& args] (doseq [arg args] (log/info arg)))
+(defn debug-log [& args] (doseq [arg args] (log/debug arg)))
 
 (defn warn-and-exit [error? & msgs]
   (log/error error?)

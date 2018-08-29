@@ -4,8 +4,10 @@
    [weaver.processors.multi :refer [pre-process-node process-node context-required-for-processor]]))
 
 (defmethod pre-process-node [:keyword "config"] [node]
-  {:weaver.processor/id :config/get-in!
-   :path [(keyword (name node))]})
+  (if (#{"get" "get-in" "get!" "get-in!"} (name node))
+    node
+    {:weaver.processor/id :config/get-in!
+     :path [(keyword (name node))]}))
 
 
 (defmethod pre-process-node [:vector "config"] [[action lookup default :as node]]

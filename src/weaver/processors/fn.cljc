@@ -3,7 +3,12 @@
    [weaver.interop :as x]
    [weaver.processors.multi :refer [pre-process-node process-node]]))
 
-(def default-lookup #:fn{:str str})
+(def default-lookup #:fn{:str str
+                         := =
+                         :< <
+                         :<= <=
+                         :> >
+                         :>= >=})
 
 (defmethod pre-process-node [:vector "fn"] [[fn-kw & args :as node]]
   {:weaver.processor/id :fn/call
