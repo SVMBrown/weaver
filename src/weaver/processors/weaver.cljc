@@ -57,7 +57,8 @@
 
 (defmethod pre-process-weaver-vec :weaver/cond [[_ & args]]
   (if (odd? (count args))
-    (throw (ex-info ":weaver/cond must have an even number of args."))
+    (throw (ex-info ":weaver/cond must have an even number of args."
+                    {:args args}))
     {:weaver.processor/id :weaver/cond
      :clauses (partition 2 args)}))
 
