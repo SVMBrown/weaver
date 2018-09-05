@@ -6,7 +6,7 @@
     (and (keyword? node) (namespace node))
     [:keyword (namespace node)]
 
-    (and (vector? node) (keyword (first node)) (namespace (first node)))
+    (and (vector? node) (keyword? (first node)) (namespace (first node)))
     [:vector (namespace (first node))]
 
     :else
