@@ -66,3 +66,17 @@
   (let [result (first (drop-while (fn [[pred _]] (not pred)) clauses))]
     (when result
       (second result))))
+
+(defmethod pre-process-weaver-vec :weaver/and [[_ & args]]
+  {:weaver.processor/id :weaver/and
+   :args args})
+
+(defmethod process-node :weaver/and [_ {:keys [args]}]
+  (every? identity args))
+
+(defmethod pre-process-weaver-vec :weaver/or [[_ & args]]
+  {:weaver.processor/id :weaver/or
+   :args args})
+
+(defmethod process-node :weaver/or [_ {:keys [args]}]
+  (some identity args))
