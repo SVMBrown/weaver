@@ -1,4 +1,4 @@
-(defproject weaver "0.1.3"
+(defproject weaver "0.1.4"
   :description "Configuration templating DSL"
   :url "https://github.com/SVMBrown/weaver"
   :license {:name "Eclipse Public License"
