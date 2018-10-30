@@ -3,6 +3,11 @@
    [clojure.string :as string]
    ["fs" :as fs]))
 
+
+(def ^:dynamic *exit-fn*
+  (fn []
+    (js/process.exit 1)))
+
 (def error-log js/console.error)
 (def warn-log js/console.warn)
 (def info-log js/console.info)
@@ -17,7 +22,7 @@
 (defn warn-and-exit [& msgs]
   (doseq [msg msgs]
     (convert-and-error-log msg))
-  (js/process.exit 1))
+  (*exit-fn*))
 
 (defn get-env
   ([key]

@@ -23,7 +23,7 @@
     "get!" {:weaver.processor/id :config/get-in!
             :path [lookup]}
 
-    "get-in!" {:weaver.processor/id :config/get-in
+    "get-in!" {:weaver.processor/id :config/get-in!
                :path lookup}
 
     (x/warn-and-exit

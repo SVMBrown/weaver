@@ -5,6 +5,10 @@
    [clojure.java.io :as io]
    [clojure.data.json :as json]))
 
+(def ^:dynamic *exit-fn*
+  (fn []
+    (println "no exit-fn bound")))
+
 (defn error-log [& args] (doseq [arg args] (log/error arg)))
 (defn warn-log [& args] (doseq [arg args] (log/warn arg)))
 (defn info-log [& args] (doseq [arg args] (log/info arg)))
@@ -14,6 +18,7 @@
   (log/error error?)
   (doseq [msg msgs]
     (log/error msg))
+  (*exit-fn*)
   (if (instance? java.lang.Throwable error?)
     (throw error?)
     (throw (ex-info "Encountered weaver error!"
