@@ -1,0 +1,5 @@
+^{:watch-dirs ["test" "src"]
+  :ring-server-options {:port 9551}
+  :auto-testing true}
+{:main weaver.core
+ :target :nodejs}

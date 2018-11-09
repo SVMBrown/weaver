@@ -1,11 +1,11 @@
 (ns ^:figwheel-no-load weaver.dev
   (:require
     [weaver.core :as core]
-    [devtools.core :as devtools]))
+    #_[devtools.core :as devtools]))
 
 
 (enable-console-print!)
 
-(devtools/install!)
+#_(devtools/install!)
 
 (core/init!)

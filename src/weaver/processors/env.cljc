@@ -5,15 +5,15 @@
 
 (defmethod pre-process-node [:keyword "env"] [node]
   {:weaver.processor/id :env/get!
-   :lookup (name node)})
+   :name (name node)})
 
 (defmethod pre-process-node [:vector "env"] [[action lookup default :as node]]
   (case (name action)
     "get" {:weaver.processor/id :env/get
-           :lookup lookup
+           :name lookup
            :default (or default nil)}
     "get!" {:weaver.processor/id :env/get!
-            :lookup lookup}
+            :name lookup}
     (x/warn-and-exit
      (str "Unrecognized environment node type: " node))))
 

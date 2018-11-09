@@ -9,50 +9,17 @@
                  [com.andrewmcveigh/cljs-time "0.5.2"]
                  [clj-time "0.14.4"]]
 
-  :plugins [[lein-cljsbuild "1.1.5"]
-            [lein-figwheel "0.5.16"]]
-
-  :min-lein-version "2.5.0"
-  :clean-targets ^{:protect false}
-  [:target-path
-   [:cljsbuild :builds :app :compiler :output-dir]
-   [:cljsbuild :builds :app :compiler :output-to]]
-
-  :resource-paths ["public"]
+  :min-lein-version "2.7.1"
 
   :source-paths ["src"]
 
-  :figwheel {:http-server-root "."
-             :nrepl-port 7002
-             :nrepl-middleware [cider.piggieback/wrap-cljs-repl]
-             :css-dirs ["public/css"]}
-
-  :cljsbuild {:builds {:app
-                       {:source-paths ["src" "env/dev/cljs"]
-                        :compiler
-                        {:main "weaver.dev"
-                         :output-to "public/js/app.js"
-                         :output-dir "public/js/out"
-                         :asset-path   "js/out"
-                         :source-map true
-                         :optimizations :none
-                         :pretty-print  true}
-                        :figwheel
-                        {:on-jsload "weaver.core/mount-root"
-                         :open-urls ["http://localhost:3449/index.html"]}}
-                       :release
-                       {:source-paths ["src" "env/prod/cljs"]
-                        :compiler
-                        {:output-to "public/js/app.js"
-                         :output-dir "public/js/release"
-                         :asset-path   "js/out"
-                         :optimizations :advanced
-                         :pretty-print false}}}}
-
-  :aliases {"package" ["do" "clean" ["cljsbuild" "once" "release"]]}
+  :aliases {"fig"       ["trampoline" "run" "-m" "figwheel.main"]
+            "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
+            "fig:min"   ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dev"]
+            "fig:test"  ["run" "-m" "figwheel.main" "-co" "test.cljs.edn" "-m" weaver.test-runner]}
 
   :profiles {:dev {:source-paths ["src" "env/dev/clj"]
-                   :dependencies [[binaryage/devtools "0.9.10"]
-                                  [figwheel-sidecar "0.5.16"]
-                                  [nrepl "0.4.4"]
-                                  [cider/piggieback "0.3.8"]]}})
+                   :resource-paths ["target"]
+                   :dependencies [[com.bhauman/figwheel-main "0.1.9"]
+                                  [com.bhauman/rebel-readline-cljs "0.1.4"]]
+                   :clean-targets ^{:protect false} ["target"]}})

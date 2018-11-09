@@ -1,7 +1,7 @@
 (ns user
- (:require [figwheel-sidecar.repl-api :as ra]))
+ #_(:require [figwheel-sidecar.repl-api :as ra]))
 
-(defn start-fw []
+#_#_#_(defn start-fw []
  (ra/start-figwheel!))
 
 (defn stop-fw []

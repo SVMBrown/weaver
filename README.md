@@ -11,6 +11,11 @@ I will do my best to review and accept any PRs, but I will only develop features
 
 There are some interop and utility functions included. Do not depend on any of these. They are purely for convenience and use inside the library. The API may change or functions may be removed at my discretion.
 
+## TODO
+
+ - Use errors and allow user to exit process if needed
+ - env is borked
+
 ## Processors
 
 ### Config
