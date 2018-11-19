@@ -3,11 +3,11 @@
    [weaver.interop :as x]
    [weaver.processors.multi :refer [pre-process-node process-node]]))
 
-(defmethod pre-process-node [:keyword "env"] [node]
+(defmethod pre-process-node [:keyword "kw-env"] [node]
   {:weaver.processor/id :env/get!
    :name (name node)})
 
-(defmethod pre-process-node [:vector "env"] [[action lookup default :as node]]
+(defmethod pre-process-node [:vector "vec-env"] [[action lookup default :as node]]
   (case (name action)
     "get" {:weaver.processor/id :env/get
            :name lookup
@@ -26,7 +26,7 @@
                                       original :weaver.processor/original
                                       :as node}]
   (if-some [val (x/get-env (name lookup))]
-    lookup
+    val
     (x/warn-and-exit
      (str "Error from node: " (or original node))
      (str "Variable " lookup " not found in environment."))))
