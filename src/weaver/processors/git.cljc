@@ -8,10 +8,10 @@
 (defn short-hash []
   (string/trim (x/shell-exec "git rev-parse --short HEAD")))
 
-(defmethod process-node :git/short-hash [_ _]
+(defmethod process-node :weaver.git/short-hash [_ _]
   (short-hash))
 
 (defmethod pre-process-node [:keyword "git"] [node]
   (case (name node)
-    "short-hash" {:weaver.processor/id :git/short-hash}
+    "short-hash" {:weaver.processor/id :weaver.git/short-hash}
     (x/warn-and-exit (str "Unrecognized git keyword processor: " node))))

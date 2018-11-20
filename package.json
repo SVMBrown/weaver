@@ -1,6 +1,6 @@
 {
   "name": "weaver-cljs",
-  "version": "0.1.4-SNAPSHOT-3",
+  "version": "0.1.4-SNAPSHOT-4",
   "description": "EDN Templating Engine",
   "license": "MIT",
   "dependencies": {

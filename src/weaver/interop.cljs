@@ -35,6 +35,8 @@
 (def ^:private default-shell-opts {:timeout 60000
                                    :encoding "UTF-8"})
 
+(defonce child-process (js/require "child_process"))
+
 (defn shell-exec
   ([command]
    (shell-exec
@@ -42,7 +44,7 @@
     {}))
   ([command opts]
    (try
-     (js/child-process.execSync
+     (child-process.execSync
       command
       (clj->js (merge default-shell-opts opts)))
      (catch js/Error e
