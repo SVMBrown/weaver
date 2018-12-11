@@ -5,7 +5,9 @@
    [weaver.interop :as x]
    [clojure.walk :as walk]))
 
-(defn process-node [ctx node]
+(defn process-node
+  "Process a specific node"
+  [ctx node]
   (try
     (multi/process-node ctx node)
     (catch #?(:clj Exception
@@ -14,12 +16,14 @@
                       (str "Unhandled error while processing node: " node)))))
 
 (defn pre-process
+  "Pre-process syntax sugar such that the only remaining template nodes are in map form"
   [template]
   (walk/postwalk
    pre-process-node
    template))
 
 (defn- required-context-preprocessed
+  "impl. for weaver.processor/required-context"
   [template]
   (cond
     (map? template)
@@ -43,24 +47,39 @@
     #{}))
 
 (defn required-context
+  "Given a template, pre-process it and compute the context keys required to fully process the template"
   [template]
   (required-context-preprocessed
    (pre-process template)))
 
 
-(defn process-obj [ctx obj]
+(defn process-obj
+  "Process an object using a pre-processed context."
+  [ctx obj]
   (walk/postwalk
    (partial process-node ctx)
    obj))
 
-(defn process-config [ctx config]
+(defn process-config
+  "Process the config map with the given context.
+   Error if config has circular dependency."
+  [ctx config]
   (if (contains? (required-context config) :config)
     (x/warn-and-exit config "Config template cannot depend on config context!")
     (process-obj ctx config)))
 
-(defn gen-process-fn [ctx]
-  (let [ctx (update ctx :config #(process-config (dissoc ctx :config) %))]
-    (partial process-obj ctx)))
+(defn process-context
+  "Processes the provided context."
+  [{:keys [config] :as ctx}]
+  (let [processed-config (process-config (dissoc ctx :config) config)
+        context (assoc ctx :config processed-config)]
+    context))
+
+(defn gen-process-fn
+  "Generates a processor function from a provided context.
+   Should only be used if the same context will be used for many templates."
+  [ctx]
+  (partial process-obj (process-context ctx)))
 
 (defn process
   "Processes the provided context and uses it to process the provided template.

@@ -1,8 +1,6 @@
 # Weaver
 
-Weaver is a small extensible configuration pre-processing library written in Clojure(Script) and targetting both the JVM and Lumo.
-The main functionality is `process` and associated functions which are backed by the `process-node` multimethod.
-There are some processors provided, which are discussed below, but since `process-node` is a multimethod, it can be extended however you wish.
+Weaver is a small extensible Data Structure templating library written in Clojure(Script) and targetting both the JVM and Lumo.
 
 ## Warning
 
@@ -11,53 +9,169 @@ I will do my best to review and accept any PRs, but I will only develop features
 
 There are some interop and utility functions included. Do not depend on any of these. They are purely for convenience and use inside the library. The API may change or functions may be removed at my discretion.
 
-## TODO
+## Overview
 
- - Use errors and allow user to exit process if needed
- - env is borked
+Weaver uses `clojure.walk/postwalk` to transform and inject data into an EDN template.
+
+The main pattern matching is on maps that have a `:weaver.processor/id` key, but there is a `pre-process-node` multimethod that provides two types of syntax sugar -namespaced keyword, and vector (a vector with a namespaced keyword as the first element).
+
+## Details
+
+The main functionality is `process` and associated functions which are backed by the `process-node` multimethod.
+There are some processors provided, which are discussed below, but since `process-node` is a multimethod, it can be extended however you wish.
+
+
+### End to end process (Rough and poorly worded)
+  1. Call `process` with a raw context and a template
+  2. Context is processed, and then the template is postwalked with `process-node`
+  3. `process-node` dispatches on type.
+      1. If it is a namespaced keyword (without a corresponding method in process-node) or a vector beginning with a namespaced keyword it goes to `:pre-process`:
+          1. Call `pre-process-node` on it, returning a template in map form if there is a method matching `[:keyword "<kw-ns>"]` if it was a keyword, and `[:vector "<kw-ns>"]` and proceeding conditionally:
+          2. If the node emerges unchanged (as determined by `=`), it falls through and the node is unchanged by `process-node`
+          3. If the node is changed, the new value is inserted and is itself processed, potentially returning to `pre-process-node` again. (Note: the node is not walked into, it is just passed to process-node directly)
+      2. If it is a map with `:weaver.processor/id` it is passed to the `process-node` method corresponding to the processor id which is expected to return the desired value. If no method is found, an error is thrown.
+      3. Otherwise the node is left unchanged.
+ 
+## Gotchas
+
+  Vector syntax must not collide with keyword syntax, otherwise the leading keyword will always be transformed first
 
 ## Processors
 
 ### Config
 
-`:config/<some-key-in-your-config>`
+Processors in the  `config` namespace are used to access the `:config` map within the processing context.
 
-This transforms into the provided key in your config (passed in on the context map).
-Will error and exit if the key isn't found. Equivalent to `[:config/get! <key>]`
+`config` has the following processors:
 
+#### :config/get-in
 
-`[:config/<get|get-in|get!|get-in!> <key-or-path-vec> <optional-default-value>]`
+Requires `:config` to be present in the context
 
-`get` and `get!` expect keys, `get-in` and `get-in!` expect path vectors.
+Access the value at a path in `:config`
 
-`get` and `get-in` optionally take a default value and fall back to nil if one isn't provided, 
-`get!` and `get-in!` will error if the value is absent in the config.
+e.g.
 
-### Ctx
+```clojure
+{:weaver.processor/id :config/get-in
+ :path                [:foo :bar]
+ :default             "<default-value>"}
+```
 
-General purpose processors that access arbritrary paths into the context map
+This accesses the `:config` in the context, and returns the value at `:path`.
+Returns `:default` if no value is found.
 
-`:ctx/get-in-resource` & `ctx/get-in-resource!`
+The following syntaxes are provided:
 
-Takes `:resource-id` and `:path` (non `!` optionally takes `:default`)
-Behaves like `get-in` where `:resource-id` is the top level context key you wish to access, and `:path` is the path to the value you'd like to access.
-`!` indicates that the processor will error if no value is found.
+```clojure
+[:config/get-in [:foo :bar] "default"]
+;; =>
+{:weaver.processor/id :config/get-in
+ :path                [:foo :bar]
+ :default             "default"}
+ 
+;; For top level keys there is also: 
 
-`:ctx/call`
+[:config/get :foo "default"]
+;; =>
+{:weaver.processor/id :config/get-in
+ :path                [:foo]
+ :default             "default"}
+```
 
-Takes `:function-id` and `:args`. `:function-id` is the top level context key that points to the function to be called, and `:args` are the arguments to be passed.
+#### :config/get-in!
+
+Requires `:config` to be present in the context
+
+Access the value at a path in `:config`
+
+e.g.
+
+```clojure
+{:weaver.processor/id :config/get-in!
+ :path                [:foo :bar]}
+```
+
+This accesses the `:config` in the context, and returns the value at `:path`. 
+Errors if a value is not found.
+
+The following syntaxes are provided:
+
+```clojure
+[:config/get-in! [:foo :bar]]
+;; =>
+{:weaver.processor/id :config/get-in!
+ :path                [:foo :bar]}
+ 
+;; For top level keys there is also: 
+
+[:config/get! :foo]
+;; =>
+{:weaver.processor/id :config/get-in!
+ :path                [:foo]}
+ 
+;; And the keyword syntax (which excludes :get, :get-in, :get!, and :get-in!)
+
+:config/foo
+;; =>
+{:weaver.processor/id :config/get-in!
+ :path                [:foo]}
+```
 
 ### Env
 
-`:env/<some-case-sensitive-env-variable>`
+Processors in the `env` namespace are used to access the shell environment.
 
-This will look up an environment variable and error out if it isn't found.
+`env` has the following processors:
 
-`[:env/<get|get!> <case-sensitive-env-variable> <optional-default-value>]`
+#### :env/get
 
-Same behaviour as in config, but accesses environment instead.
 
+Access the specified environment variable
+
+e.g.
+
+```clojure
+{:weaver.processor/id :env/get
+ :name                "HOME"
+ :default             "/home/foo"}
+```
+The following syntaxes are provided:
+
+```clojure
+[:env/get "HOME" "/home/foo"]
+;; =>
+{:weaver.processor/id :env/get
+ :name                "HOME"
+ :default             "/home/foo"}
+```
+
+#### :env/get!
+
+Access the specified environment variable, error if not found
+
+e.g.
+
+```clojure
+{:weaver.processor/id :env/get!
+ :name                "HOME"}
+```
+The following syntaxes are provided:
+
+```clojure
+[:env/get! "HOME"]
+;; =>
+{:weaver.processor/id :env/get!
+ :name                "HOME"}
+ 
+:env/HOME
+;;=>
+{:weaver.processor/id :env/get!
+ :name                "HOME"}
+```
 ### Fn
+
+TODO: Replicate above format of documentation
 
 `:fn/<some-fn-name>`
 
@@ -68,17 +182,23 @@ Defaults currently contains: str, =, <, >, <=, >=
 
 ### Format
 
+TODO: Replicate above format of documentation
+
 `:format/cl-format`
 
 Takes `:string` and `:args`. Calls `clojure.pprint/cl-format` to process `:string` as as format-string with `:args` as args.
 
 ### Git
 
+TODO: Replicate above format of documentation
+
 `:git/short-hash`
 
 Returns the short hash of HEAD
 
 ### Time
+
+TODO: Replicate above format of documentation
 
 `:time/from-long`
 
@@ -90,6 +210,8 @@ Takes `:time` and optional `:time-zone` and `:format-string`. Formats time accor
 Template wide defaults can be specified in the context at `:time-zone` and `:format-string`.
 
 ### Weaver
+
+TODO: Replicate above format of documentation
 
 Generally applicable processors
 
@@ -140,6 +262,82 @@ Generally applicable processors
 ```
 
 
+### Context or ctx (ADVANCED)
+
+Processors in the `ctx` namespace are intended as processors of last resort to stand in for more purpose-built extensions.
+
+`ctx` has the following processors:
+
+#### :ctx/get-in-resource
+
+Similar to the config accessor, but for arbitrary context resources.
+
+Requires the accessed resource (i.e. the value at `:resource-id`) to be present in the context. 
+
+
+e.g.
+
+```clojure
+{:weaver.processor/id :ctx/get-in-resource
+ :resource-id         :something
+ :path                [:foo :bar]
+ :default             "default"}
+```
+
+This accesses the path `[:foo :bar]` in the `:something` resource, returning `"default"` if it isn't found.
+
+#### :ctx/get-in-resource!
+
+Similar to the config accessor, but for arbitrary context resources.
+
+Requires the accessed resource (i.e. the value at `:resource-id`) to be present in the context. 
+
+e.g.
+
+```clojure
+{:weaver.processor/id :ctx/get-in-resource!
+ :resource-id         :something
+ :path                [:foo :bar]}
+```
+
+This accesses the path `[:foo :bar]` in the `:something` resource, erroring if it isn't found.
+
+The following syntaxes are provided:
+
+```clojure
+[:ctx.get-in/something [:foo :bar]]
+;; =>
+{:weaver.processor/id :ctx/get-in-resource!
+ :resource-id         :something
+ :path                [:foo :bar]}
+```
+
+#### :ctx/call
+
+Evaluates a function in the context with the provided argument list.
+
+Requires the accessed function (i.e. the value at `:function-id`) to be present in the context. 
+
+e.g.
+
+```clojure
+{:weaver.processor/id :ctx/call
+ :function-id         :plus
+ :args                [1 2]}
+```
+
+This applies the function at `:plus` (presumably `+`) on `[1 2]` (presumably evaluating to `3`)
+
+The following syntaxes are provided:
+
+```clojure
+[:ctx.call/plus [1 2]]
+;; =>
+{:weaver.processor/id :ctx/call
+ :function-id         :plus
+ :args                [1 2]}
+```
+
 ### Development mode
 
 To start the Figwheel compiler, navigate to the project folder and run the following command in the terminal:
@@ -155,3 +353,7 @@ Test from the repl
 TODO
 
 NOTE: npm repo will be weaver-cljs
+
+
+### Libraries that use Weaver
+  - [Albatross](https://github.com/SVMBrown/albatross#albatross)
